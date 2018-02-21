@@ -3,6 +3,7 @@
 
 import java.util.Scanner;
 import java.io.File;
+import java.net.*;
 
 public class Project1
 {
@@ -10,24 +11,54 @@ public class Project1
     private static int[][] manList = new int[10][10]; //man preferences [man][man rank] = man
     private static int[][] womanList = new int[10][10]; //woman preferences [man][man rank] = man
     private static int n; // number of men/women
-    private static int m; // number of stable matchings
-    private static int[][] manPropose = new int[10][10]; //man propose match [man][1] = man
-    private static int[][] womanPropose = new int[10][10]; //woman propose match [man][1] = man
+    private static int m = 0; // number of stable matchings
+    private static int[][] manPropose = new int[10][10]; //man propose match [man][1] = woman
+    private static int[][] womanPropose = new int[10][10]; //woman propose match [woman][1] = man
+    private static int[][] womanProposeMan = new int[10][10]; //woman propose match [man][1] = woman ; used for comapirsons
 
     public static void main(String[] args)
     {
-        System.out.println("Project 1: Stable Match Check");
-        setPreferenceLists("input1.txt");
-        int p = 0;
-        menPropose(p);
-        p = 0;
-        womenPropose(p);
-        match(); // now let's match based on the man and woman propose lists
-        
+        setPreferenceLists();
+        menPropose(1); // p=1
+        womenPropose(1);
+        int[][] stablePropose = new int[10][10]; //stable propose match [man][1] = woman
+        match(1, stablePropose); // now let's match based on the man and woman propose lists
+        System.out.println(m);
+               
+        //test(); //=-=-=-=-=-=-=-=TESTING=-=-=-=-=-=-=-=-=-=-==-=-=
     }
-    public static void setPreferenceLists(String fileName) // sets man pref and women pref from file into our arrays
+    
+    public static void test()
     {
-        File file = new File(fileName);
+        System.out.println("manList");
+        printArray(manList);
+        System.out.println("womanList");
+        printArray(womanList);
+        System.out.println("manPropose");
+        printArray(manPropose);
+        System.out.println("womanPropose");
+        printArray(womanPropose);
+        System.out.println("womanProposeMan");
+        printArray(womanProposeMan);
+    }
+    
+    public static void printArray(int[][] a) // prints array
+    {
+        for(int i = 1; i <= n; i++)
+        {
+            for(int j = 1; j <= n; j++)
+            {
+                System.out.print(a[i][j] + " ");
+            }
+            System.out.print("\n");
+        }
+    }
+    
+    //Works
+    public static void setPreferenceLists() // sets man pref and women pref from file into our arrays
+    {
+        URL path = Project1.class.getResource("input1.txt");
+        File file = new File(path.getFile());
         try {
             int i = 0;
             int j;
@@ -45,7 +76,7 @@ public class Project1
                 {
                     for(j = 1; j <= n; j++)
                     {
-                        manList[i][j]= sc.nextInt();  // i-1 tomake men start at 0
+                        manList[i][j]= sc.nextInt();  // i tomake men start at 1
                     }
                     i++;
                 }
@@ -53,7 +84,7 @@ public class Project1
                 {
                     for(j = 1; j <= n; j++)
                     {
-                        womanList[i-n][j]= sc.nextInt();  //i-1-n tomake women start at 0
+                        womanList[i-n][j]= sc.nextInt();  //i-1-n tomake women start at 1
                     }
                     i++;
                 }
@@ -64,7 +95,7 @@ public class Project1
             ex.printStackTrace();
         }
     }
-    
+    //Works
     public static void menPropose(int p) //get a match from men proposing to women
     {
         //1. each man proposes to his next top choice p
@@ -74,12 +105,12 @@ public class Project1
         {
             if(manPropose[i][1] == 0)
             {    
-                int woman = manList[i][p]; //next top man for man i
+                int woman = manList[i][p]; //next top woman for man i
 
                 int counter = womanSuitors[woman][0]; // use index 0 as number of suitors
-                womanSuitors[woman][0] = counter + 1; // increase number of suitors for this man
+                womanSuitors[woman][0] = counter + 1; // increase number of suitors for this woman
 
-                for(int j = 1; j <= n; j++) //now find rank of this man for this man; it's easier to sort this way
+                for(int j = 1; j <= n; j++) //now find rank of this man for this woman; it's easier to sort this way
                 {
                     if(womanList[woman][j] == i)
                     {
@@ -128,7 +159,7 @@ public class Project1
             }
         }
     }
-    
+    //Works
     public static void womenPropose(int p) //mirrored version of malePropose method
     {
         //1. each man proposes to his next top choice p
@@ -172,6 +203,7 @@ public class Project1
                 int womanRank = manSuitors[i][1];
                 int woman = manList[i][womanRank];
                 womanPropose[woman][1] = i;
+                womanProposeMan[i][1] = woman; 
                 
             }
             else if(manSuitors[i][0] == 1) // if man has 1 choice man must pick the woman
@@ -179,6 +211,7 @@ public class Project1
                 int womanRank = manSuitors[i][1];
                 int woman = manList[i][womanRank];
                 womanPropose[woman][1] = i;
+                womanProposeMan[i][1] = woman; 
             }
             //else nothing happens
         }
@@ -193,4 +226,51 @@ public class Project1
         }
     }
     
+    public static void match(int p, int[][] stablePropose) // in this case p must start at 1
+    {
+        // 1. Doing bound calculations for man p
+        int jth = 0, kth = 0;
+        for(int j = 1; j <= n; j++) //find rank of worst possible woman
+        {
+            if(manList[p][j] == womanProposeMan[p][1])
+            {
+                kth = j; 
+            }
+        }
+        for(int j = 1; j <= n; j++) //find rank of best possible woman
+        {
+            if(manList[p][j] == manPropose[p][1])
+            {
+                jth = j; 
+            }
+        }        
+        
+        // 2. Find stable matches for man p
+        for(int i = jth; i <= kth; i++) // p represents man and i represents rank
+        {                
+            boolean avail = true;
+            for(int j = 1; j < p; j++) // Make sure woman is available
+            {
+                if(stablePropose[j][1] == manList[p][i])
+                {
+                    avail = false;
+                }
+            }
+            
+            if(avail)
+            {             
+                if(i<n) //if not final man recurse till final man
+                {
+                    stablePropose[p][1] = manList[p][i];
+                    match(++p, stablePropose);
+                }
+                else if(i ==n) // if final man then increment stable marriage count
+                {
+                    m++;
+                }
+                
+            }
+        }
+            
+    }
 }
