@@ -15,6 +15,8 @@ public class Project1
     private static int[][] manPropose = new int[10][10]; //man propose match [man][1] = woman
     private static int[][] womanPropose = new int[10][10]; //woman propose match [woman][1] = man
     private static int[][] womanProposeMan = new int[10][10]; //woman propose match [man][1] = woman ; used for comapirsons
+    private static int[][] manSuitors = new int[10][10]; //suitors for man [man][i] = woman rank
+    private static int[][] womanSuitors = new int[10][10]; //suitors for woman [woman][i] = man rank
 
     public static void main(String[] args)
     {
@@ -30,6 +32,7 @@ public class Project1
     
     public static void test()
     {
+        System.out.println("n: " + n);
         System.out.println("manList");
         printArray(manList);
         System.out.println("womanList");
@@ -98,9 +101,7 @@ public class Project1
     //Works
     public static void menPropose(int p) //get a match from men proposing to women
     {
-        //1. each man proposes to his next top choice p
-        int[][] womanSuitors = new int[10][10]; // rank of suitors women gets
-        
+        //1. each man proposes to his next top choice p        
         for(int i = 1; i <= n; i++) // i represents man
         {
             if(manPropose[i][1] == 0)
@@ -127,7 +128,7 @@ public class Project1
         {
             if(womanSuitors[i][0] > 1) // if a woman has more than 1 choice she picks the best
             {
-                for(int j = 2; j <= n; j++)
+                for(int j = 2; j <= womanSuitors[i][0]; j++)
                 {
                     if(womanSuitors[i][1] > womanSuitors[i][j]) // take higher ranked "lower number" man
                     { 
@@ -162,19 +163,17 @@ public class Project1
     //Works
     public static void womenPropose(int p) //mirrored version of malePropose method
     {
+        //System.out.println("test p: " + p);
         //1. each man proposes to his next top choice p
-        int[][] manSuitors = new int[10][10]; // rank of suitors man gets
-        
         for(int i = 1; i <= n; i++) // i represents woman
         {
             if(womanPropose[i][1] == 0)
             {    
                 int man = womanList[i][p]; //next top man for woman i
-
                 int counter = manSuitors[man][0]; //number of suitors
                 manSuitors[man][0] = counter + 1; //increase suitors
 
-                for(int j = 1; j <= n; j++) //now find rank of this woman for this man; it's easier to sort this way
+                for(int j = 1; j <= n; j++) //now find rank j of this woman for this man; it's easier to sort this way
                 {
                     if(manList[man][j] == i)
                     {
@@ -185,13 +184,12 @@ public class Project1
             
         } // else skip the woman
         
-        //2. each man rejects all but his top suitor; rejected woman become 0
-       
+        //2. each man rejects all but his top suitor; rejected woman become 0       
         for(int i = 1; i <= n; i++) //i represents man
         {
             if(manSuitors[i][0] > 1) // if a man has more than 1 choice he picks the best
             {
-                for(int j = 2; j <= n; j++)
+                for(int j = 2; j <= manSuitors[i][0]; j++)
                 {
                     if(manSuitors[i][1] > manSuitors[i][j]) // take higher ranked "lower number" woman
                     { 
@@ -199,6 +197,7 @@ public class Project1
                     } //else [i][1] stays the same
                     manSuitors[i][j] = 0; // remove j from array
                     manSuitors[i][0]--; //decerement the suitor counter
+                    //System.out.println("test counter " + i + ":" + manSuitors[i][0]);
                 }
                 int womanRank = manSuitors[i][1];
                 int woman = manList[i][womanRank];
@@ -217,7 +216,8 @@ public class Project1
         }
         
         //3. check if everyone is engaged
-        for(int i = 1; i <= n; i++){
+        for(int i = 1; i <= n; i++)
+        {
             if(womanPropose[i][1] == 0) //if everyone is not engaged repeat
             { 
                 womenPropose(++p);
@@ -225,7 +225,7 @@ public class Project1
             }
         }
     }
-    
+    //Works
     public static void match(int p, int[][] stablePropose) // in this case p must start at 1
     {
         // 1. Doing bound calculations for man p
@@ -259,18 +259,44 @@ public class Project1
             
             if(avail)
             {             
-                if(i<n) //if not final man recurse till final man
+                if(p<n) //if not final man recurse till final man
                 {
                     stablePropose[p][1] = manList[p][i];
-                    match(++p, stablePropose);
+                    //System.out.println("StableMatch Man"+ p);
+                    //printArray(stablePropose); // to check
+                    match(p+1, stablePropose);
                 }
-                else if(i ==n) // if final man then increment stable marriage count
+                else if(p ==n) // if final man then check for stability
                 {
+                    stablePropose[p][1] = manList[p][i];
                     m++;
+                    System.out.println("FinalStableMatch " + m);
+                    printArray(stablePropose); // to check
+                    
+                    for(int j = 1; j < n; j++) // j is the man
+                    {
+                        int rank = 0;
+                        for(int k = 1; k < n; k++) // k is the rank
+                        {
+                            if(stablePropose[j][1] == manList[j][k])
+                            {
+                                rank = k;
+                                break;
+                            }
+                        }
+                         
+                        for(int k = rank; k >= 1; k--)
+                        {
+                            
+                        }
+                    }
                 }
-                
             }
+            /*else{ // remove this else
+                System.out.println("Man "+ p + "choice" + i + " is unanvail");
+            }*/
         }
+        //System.out.println("Done with p "+ p);
             
     }
 }
